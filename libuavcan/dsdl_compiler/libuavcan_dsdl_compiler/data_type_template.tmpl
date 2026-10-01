@@ -59,7 +59,7 @@ struct UAVCAN_EXPORT ${t.cpp_type_name}
     ${expand_attr_types(group_name='FieldTypes', attrs=fields)}
 
     % if union:
-    
+
     struct Tag
     {
         enum Type
@@ -404,19 +404,23 @@ template <int _tmpl>
 ::uavcan::DataTypeSignature ${t.cpp_type_name}<_tmpl>::getDataTypeSignature()
 % endif
 {
-    ::uavcan::DataTypeSignature signature(${'0x%08X' % t.get_dsdl_signature()}ULL);
 <!--(macro extend_signature_per_field)--> #! scope_prefix, fields
     % for a in fields:
     ${scope_prefix}FieldTypes::${a.name}::extendDataTypeSignature(signature);
     % endfor
 <!--(end)-->
-% if t.kind == t.KIND_SERVICE:
+% if t.override_signature is not None:
+    return ::uavcan::DataTypeSignature(${'0x%016X' % t.override_signature}ULL);
+% else:
+    ::uavcan::DataTypeSignature signature(${'0x%08X' % t.get_dsdl_signature()}ULL);
+    % if t.kind == t.KIND_SERVICE:
 ${extend_signature_per_field(scope_prefix='Request::', fields=t.request_fields)}
 ${extend_signature_per_field(scope_prefix='Response::', fields=t.response_fields)}
-% else:
+    % else:
 ${extend_signature_per_field(scope_prefix='', fields=t.fields)}
-% endif
+    % endif
     return signature;
+% endif
 }
 
 /*
